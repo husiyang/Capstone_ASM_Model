@@ -12,6 +12,7 @@ sys.path.insert(0, BASE)
 import oepr.settings
 import oepr.read
 import oepr.cli
+import oepr.preprocess
 
 
 def main():
@@ -36,8 +37,9 @@ def main():
         return getattr(os, 'EX_NOINPUT', -1)
 
     for c in oepr.read.get_csvs(path_labelled_visits):
-        print(oepr.read.get_data_take(c))
-        for d in oepr.read.get_data_take(c):
+        print(oepr.read.get_info_take(c))
+
+        for d in oepr.preprocess.sample_random(c, 5):
             print(d)
 
     return getattr(os, 'EX_OK', 0)

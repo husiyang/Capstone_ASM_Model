@@ -7,6 +7,8 @@ import csv
 
 import oepr.util
 
+KEY_TOTAL_FRAMES = 'Total Frames in Take'
+
 
 def _parse_data_line(line):
     """parse data line"""
@@ -31,10 +33,17 @@ def get_info_take(path_csv):
     with open(path_csv, 'r') as hdl:
         data = next(hdl).split(',')
 
-    return {
+    info = {
         data[2 * k].strip(): data[2 * k + 1].strip()
         for k in range(len(data) // 2)
     }
+    info[KEY_TOTAL_FRAMES] = int(info[KEY_TOTAL_FRAMES])
+    info['Total Exported Frames'] = int(info['Total Exported Frames'])
+    info['Export Frame Rate'] = float(info['Export Frame Rate'])
+
+    assert info[KEY_TOTAL_FRAMES] == info['Total Exported Frames']
+
+    return info
 
 
 @oepr.util.check_path('f')
