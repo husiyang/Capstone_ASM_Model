@@ -10,6 +10,19 @@ import oepr.read
 
 DEFAULT_SAMPLE_SIZE = 100
 
+@oepr.util.check_path('f')
+def sample_average_bucketed_centroid_distance(path_csv,
+        size=DEFAULT_SAMPLE_SIZE, **kwargs):
+    """Sample as follows:
+        - For each frame, calculate the centroid.
+        - For each point in the frame, calculate the average distance from the
+          centroid.
+        - For some number of subranges ("buckets") in in this time series along
+          the y axis (i.e. subranges of average distance), take a random
+          sampling from each subrange
+    """
+
+
 
 @oepr.util.check_path('f')
 def sample_random(path_csv, size=DEFAULT_SAMPLE_SIZE):
@@ -28,6 +41,5 @@ def sample_random(path_csv, size=DEFAULT_SAMPLE_SIZE):
                 current_index = random_indices.popleft()
             except IndexError:
                 break
-
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
