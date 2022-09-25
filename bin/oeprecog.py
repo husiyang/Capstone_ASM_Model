@@ -39,7 +39,7 @@ def main():
     for c in oepr.read.get_csvs(path_labelled_visits):
         print(oepr.read.get_info_take(c))
 
-        for d in oepr.preprocess.sample_random(c, 5):
+        for d in oepr.preprocess.sample_average_bucketed_centroid_distance(c):
             print(d)
 
     return getattr(os, 'EX_OK', 0)
