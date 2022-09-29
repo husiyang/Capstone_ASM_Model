@@ -14,6 +14,8 @@ import oepr.read
 import oepr.cli
 import oepr.preprocess
 
+SAMPLE_FUNCTION = oepr.preprocess.sample_average_bucketed_centroid_distance
+
 
 def main():
     """entry point"""
@@ -39,7 +41,7 @@ def main():
     for c in oepr.read.get_csvs(path_labelled_visits):
         print(oepr.read.get_info_take(c))
 
-        for d in oepr.preprocess.sample_average_bucketed_centroid_distance(c):
+        for d in SAMPLE_FUNCTION(c):
             print(d)
 
     return getattr(os, 'EX_OK', 0)

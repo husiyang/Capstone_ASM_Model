@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Read
-"""
+"""Read"""
 import os.path
 import csv
 
