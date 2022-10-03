@@ -20,6 +20,12 @@ CREATE TABLE Take (
 
     PRIMARY KEY (id)
 )
+
+CREATE TABLE Frame (
+    number  INT NOT NULL,
+    timestamp   INT NOT NULL,
+    id_take INT NOT NULL,
+)
 """
 
 if __name__ == '__main__':
