@@ -1,32 +1,82 @@
 #!/usr/bin/env python3
 """Database"""
-import sqlite3
+import os
+import re
+import shelve
+import sys
 
-SCHEMA = """
-CREATE DATABASE oepr;
+import oepr.sample
+import oepr.settings
+import oepr.util
 
-CREATE TABLE Take (
-    id                   INT NOT NULL,
-    capture_frame_rate   UNSIGNED FLOAT(24),
-    coord_space          VARCHAR(31),
-    exported_frame_count UNSIGNED SMALLINT,
-    export_frame_rate    UNSIGNED FLOAT(24),
-    format_version       UNSIGNED FLOAT(24),
-    length_units         VARCHAR(31),
-    name                 VARCHAR(63),
-    notes                VARCHAR(255),
-    rotation_type        VARCHAR(31),
-    total_frame_count    UNSIGNED SMALLINT,
 
-    PRIMARY KEY (id)
-)
+@oepr.util.check_path('f')
+def _kv_write_sample(path_cfg, key, value):
+    path_samples = oepr.settings.get_cfg_field('path_samples', path_cfg)
 
-CREATE TABLE Frame (
-    number  INT NOT NULL,
-    timestamp   INT NOT NULL,
-    id_take INT NOT NULL,
-)
-"""
+    if not os.path.isdir(path_samples):
+        os.mkdir(path_samples)
+
+    shelf = os.path.join(path_samples, key + '_shelf')
+
+    with shelve.open(shelf) as hdl:
+        hdl['metadata'] = value.pop('metadata')
+        hdl['sample'] = value.pop('sample')
+
+    print('sample written to %s' % shelf, file=sys.stderr)
+
+
+@oepr.util.check_path('f')
+def _kv_read_sample(path_cfg, key):
+    path_samples = oepr.settings.get_cfg_field('path_samples', path_cfg)
+
+    if not os.path.isdir(path_samples):
+        raise NotADirectoryError('no such dir as %s' % path_samples)
+
+    with shelve.open(os.path.join(path_samples, key + '_shelf')) as hdl:
+        return dict(hdl)
+
+@oepr.util.check_path('f')
+def _kv_read_all_sample(path_cfg):
+    path_samples = oepr.settings.get_cfg_field('path_samples', path_cfg)
+
+    if not os.path.isdir(path_samples):
+        raise NotADirectoryError('no such dir as %s' % path_samples)
+
+    files = (
+        os.path.join(path_samples, f) for f in os.listdir(path_samples)
+        if os.path.isfile(os.path.join(path_samples, f))
+        if f.endswith('db')
+    )
+
+    for f in files:
+        k = re.match(r'^(?P<key>.*)_shelf\.db$', f).group('key')
+        yield _kv_read_sample(path_cfg, k)
+
+
+@oepr.util.check_path('f')
+def kv_write(path_cfg, type_, key, value):
+    if type_ == 'sample':
+        return _kv_write_sample(path_cfg, key, value)
+    else:
+        raise NotImplementedError()
+
+
+@oepr.util.check_path('f')
+def kv_read(path_cfg, type_, key):
+    if type_ == 'sample':
+        return _kv_read_sample(path_cfg, key)
+    else:
+        raise NotImplementedError()
+
+
+@oepr.util.check_path('f')
+def kv_read_all(path_cfg, type_):
+    if type_ == 'sample':
+        return _kv_read_all_sample(path_cfg)
+    else:
+        raise NotImplementedError()
+
 
 if __name__ == '__main__':
     pass

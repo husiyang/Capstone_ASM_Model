@@ -4,14 +4,23 @@ Sample.
 """
 import os.path
 import pathlib
-import shelve
 import sys
 
+import oepr.db
 import oepr.settings
 import oepr.read
 import oepr.preprocess
 
 SAMPLE_FUNCTION = oepr.preprocess.sample_average_bucketed_centroid_distance
+
+def key(name_take):
+    return name_take.replace(' ', '_')
+
+def read(path_cfg):
+    for s in oepr.db.kv_read_all(path_cfg, 'sample'):
+        print(s)
+
+    return getattr(os, 'EX_OK', 0)
 
 
 def main(args):
@@ -31,10 +40,13 @@ def main(args):
     if not os.path.isdir(path_samples):
         os.mkdir(path_samples)
 
+    if args.read:
+        return read(path_cfg)
+
     for c in oepr.read.get_csvs(path_labelled_visits):
         try:
             metadata = oepr.read.get_info_take(c)
-            samples = list(SAMPLE_FUNCTION(c))
+            sample = list(SAMPLE_FUNCTION(c))
         except Exception as _:
             error = os.path.join(
                 path_samples,
@@ -42,16 +54,10 @@ def main(args):
             )
             pathlib.Path(error).touch()
         else:
-            shelf = os.path.join(
-                path_samples, metadata['Take Name'].replace(' ', '_') + '_shelf'
-            )
-
-            with shelve.open(shelf) as hdl:
-                hdl['metadata'] = metadata
-                hdl['samples'] = samples
-
-            print(metadata)
-            print(samples)
+            pass
+            k = key(metadata['Take Name'])
+            value = {'metadata': metadata, 'sample': sample}
+            oepr.db.kv_write(path_cfg, 'sample', k, value)
 
     return getattr(os, 'EX_OK', 0)
 
