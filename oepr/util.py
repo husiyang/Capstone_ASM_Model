@@ -27,5 +27,4 @@ def check_path(type_=None):
         return wrapper
     return decorator_check_path
 
-
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
