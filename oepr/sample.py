@@ -13,8 +13,16 @@ import oepr.preprocess
 
 SAMPLE_FUNCTION = oepr.preprocess.sample_average_bucketed_centroid_distance
 
+def config_parser(subp):
+    parse = subp.add_parser('sample')
+    parse.set_defaults(func=oepr.sample.main)
+    parse.add_argument('--read', action='store_true',
+                          help='read samples to stdout')
+    return parse
+
 def key(name_take):
     return name_take.replace(' ', '_')
+
 
 def read(path_cfg):
     for s in oepr.db.kv_read_all(path_cfg, 'sample'):
