@@ -21,6 +21,7 @@ SAMPLE_DIRS = (
     (os.path.join('train', 'csv'), os.path.join('test', 'csv'))
 )
 
+
 def read_sample():
     """read samples into dataframes"""
     dir_sample_train = ''
