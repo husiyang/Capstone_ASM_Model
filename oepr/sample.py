@@ -6,6 +6,7 @@ import csv
 import functools
 import os.path
 import pathlib
+import shelve
 import sys
 
 import oepr.db
@@ -68,6 +69,32 @@ def convert(path_cfg):
     return getattr(os, 'EX_OK', 0)
 
 
+def convert_shelf(path_shelf):
+    titlerow = functools.reduce(
+        lambda a, b: a + b,
+        ('X.{0} Y.{0} Z.{0}'.format(k).split() for k in range(1, 89)),
+        ['X', 'Y', 'Z']
+    )
+
+    def frame_to_row(frame):
+        return functools.reduce(lambda a, b: a + list(b), frame['points'], [])
+
+    with shelve.open(path_shelf) as hdl:
+        data = dict(hdl)
+
+    metadata = data.pop('metadata')
+    sample = data.pop('sample')
+
+    path = os.path.join(os.path.dirname(path_shelf), '%s.csv' % key(metadata['Take Name']))
+
+    with open(path, 'w', newline='') as hdl:
+        w = csv.writer(hdl, delimiter=',')
+
+        w.writerow(titlerow)
+        for frame in sample:
+            w.writerow(frame_to_row(frame))
+
+
 def sample(csv_, path_cfg, path_samples):
     try:
         metadata = oepr.read.get_info_take(csv_)
@@ -82,6 +109,8 @@ def sample(csv_, path_cfg, path_samples):
         k = key(metadata['Take Name'])
         value = {'metadata': metadata, 'sample': sample}
         oepr.db.kv_write(path_cfg, 'sample', k, value)
+
+        return k
 
 
 def main(args):
@@ -108,9 +137,9 @@ def main(args):
     elif args.train_and_test:
         def sample_to_subdir(subdir):
             for c in oepr.read.get_csvs(path_labelled_visits):
-                sample(c, path_cfg, path_samples)
-
-            convert(path_cfg)
+                k = sample(c, path_cfg, path_samples)
+                if k:
+                    convert_shelf(os.path.join(path_samples, k + '_shelf'))
 
             files = (
                 os.path.join(path_samples, f) for f in os.listdir(path_samples)
