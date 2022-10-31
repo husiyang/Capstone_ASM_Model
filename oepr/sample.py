@@ -24,6 +24,8 @@ def config_parser(subp):
                      help='read samples to stdout')
     grp.add_argument('--convert', action='store_true',
                      help='convert shelf files to csv')
+    grp.add_argument('--train-and-test', action='store_true',
+                     help='produce train and test data in csv form')
     return parse
 
 
@@ -66,6 +68,22 @@ def convert(path_cfg):
     return getattr(os, 'EX_OK', 0)
 
 
+def sample(csv_, path_cfg, path_samples):
+    try:
+        metadata = oepr.read.get_info_take(csv_)
+        sample = list(SAMPLE_FUNCTION(csv_))
+    except Exception as _:
+        error = os.path.join(
+            path_samples,
+            metadata['Take Name'].replace(' ', '_') + '_error.txt'
+        )
+        pathlib.Path(error).touch()
+    else:
+        k = key(metadata['Take Name'])
+        value = {'metadata': metadata, 'sample': sample}
+        oepr.db.kv_write(path_cfg, 'sample', k, value)
+
+
 def main(args):
     """main function for module"""
     path_cfg = args.config_file
@@ -87,22 +105,35 @@ def main(args):
         return read(path_cfg)
     elif args.convert:
         return convert(path_cfg)
+    elif args.train_and_test:
+        def sample_to_subdir(subdir):
+            for c in oepr.read.get_csvs(path_labelled_visits):
+                sample(c, path_cfg, path_samples)
 
-    for c in oepr.read.get_csvs(path_labelled_visits):
-        try:
-            metadata = oepr.read.get_info_take(c)
-            sample = list(SAMPLE_FUNCTION(c))
-        except Exception as _:
-            error = os.path.join(
-                path_samples,
-                metadata['Take Name'].replace(' ', '_') + '_error.txt'
+            convert(path_cfg)
+
+            files = (
+                os.path.join(path_samples, f) for f in os.listdir(path_samples)
             )
-            pathlib.Path(error).touch()
-        else:
-            pass
-            k = key(metadata['Take Name'])
-            value = {'metadata': metadata, 'sample': sample}
-            oepr.db.kv_write(path_cfg, 'sample', k, value)
+            files = list(filter(os.path.isfile, files))
+
+            p_subdir = os.path.join(path_samples, subdir)
+
+            if not os.path.isdir(p_subdir):
+                os.mkdir(p_subdir)
+
+            for index, f in enumerate(f for f in files if f.endswith('.csv')):
+                os.rename(f, os.path.join(p_subdir, '%d.csv' % (index + 1)))
+
+            for f in files:
+                if os.path.isfile(f):
+                    os.unlink(f)
+
+        sample_to_subdir('train')
+        sample_to_subdir('test')
+    else:
+        for c in oepr.read.get_csvs(path_labelled_visits):
+            sample(c, path_cfg, path_samples)
 
     return getattr(os, 'EX_OK', 0)
 
