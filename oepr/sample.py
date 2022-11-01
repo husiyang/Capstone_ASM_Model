@@ -8,6 +8,7 @@ import os.path
 import pathlib
 import shelve
 import sys
+import threading
 
 import oepr.db
 import oepr.settings
@@ -119,20 +120,38 @@ def sample_csv(path_csv, path_out, path_cfg, path_samples, path_normalise, norma
 
 def sample_to_subdir(subdir, path_cfg, path_samples, path_labelled_visits,
                      normalise=False):
+    args_list = []
+    threads = []
     p_subdir = os.path.join(path_samples, subdir)
-
-    if not os.path.isdir(p_subdir):
-        os.makedirs(p_subdir)
 
     path_normalise = oepr.settings.get_cfg_field('path_normalise', path_cfg)
     normalise_subdir = os.path.join(path_normalise, subdir)
+
+    max_threads = oepr.settings.get_cfg_field('max_threads', path_cfg, converter=int)
+
+    if not os.path.isdir(p_subdir):
+        os.makedirs(p_subdir)
 
     if normalise and not os.path.isdir(normalise_subdir):
         os.makedirs(normalise_subdir)
 
     for index, c in enumerate(oepr.read.get_csvs(path_labelled_visits)):
         path_out = os.path.join(p_subdir, '%d.csv' % (index + 1))
-        sample_csv(c, path_out, path_cfg, path_samples, path_normalise, normalise)
+        args = (c, path_out, path_cfg, path_samples, path_normalise, normalise)
+        args_list.append(args)
+
+    while args_list:
+        if len(threads) < max_threads:
+            threads.append(threading.Thread(target=sample_csv, args=args_list.pop()))
+            threads[-1].start()
+
+        for index, t in enumerate(threads):
+            if not t.is_alive():
+                t.join()
+            threads.pop(index)
+
+    for t in threads:
+        t.join()
 
 
 def sample(csv_, path_cfg, path_samples):
