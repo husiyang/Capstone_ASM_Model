@@ -8,7 +8,6 @@ import os
 import oepr.learn
 import oepr.settings
 import oepr.sample
-import oepr.normalise
 
 
 def get_cli_args():
@@ -21,7 +20,6 @@ def get_cli_args():
     subparsers = parser.add_subparsers()
     oepr.sample.config_parser(subparsers)
     oepr.learn.config_parser(subparsers)
-    oepr.normalise.config_parser(subparsers)
 
     args = parser.parse_args()
 

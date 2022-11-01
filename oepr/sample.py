@@ -12,6 +12,7 @@ import sys
 import oepr.db
 import oepr.settings
 import oepr.read
+import oepr.normalise
 import oepr.preprocess
 
 SAMPLE_FUNCTION = oepr.preprocess.sample_average_bucketed_centroid_distance
@@ -27,6 +28,8 @@ def config_parser(subp):
                      help='convert shelf files to csv')
     grp.add_argument('--train-and-test', action='store_true',
                      help='produce train and test data in csv form')
+    grp.add_argument('--normalise', action='store_true',
+                     help='produce train, test data and do all normalisation')
     return parse
 
 

@@ -23,7 +23,7 @@ def _kv_write_sample(path_cfg, key, value):
         hdl['metadata'] = value.pop('metadata')
         hdl['sample'] = value.pop('sample')
 
-    print('sample written to %s' % shelf, file=sys.stderr)
+    print('sample written to %s.db' % shelf, file=sys.stderr)
 
 
 @oepr.util.check_path('f')

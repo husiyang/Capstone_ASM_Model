@@ -5,6 +5,8 @@ Read
 import functools
 import os.path
 
+import pandas as pd
+
 
 def check_path(type_=None):
     if type_:
@@ -26,5 +28,10 @@ def check_path(type_=None):
             return f(*args, **kwargs)
         return wrapper
     return decorator_check_path
+
+
+@check_path('f')
+def csv_to_dataframe(path_csv):
+    return pd.read_csv(path_csv)
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
