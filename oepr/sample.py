@@ -97,6 +97,43 @@ def convert_shelf(path_shelf):
         for frame in sample:
             w.writerow(frame_to_row(frame))
 
+    return path
+
+
+def sample_csv(path_csv, path_out, path_cfg, path_samples, path_normalise, normalise=False):
+    """sample and optionally normalise a single csv file"""
+    k = sample(path_csv, path_cfg, path_samples)
+
+    if not k:
+        return
+
+    path_shelf = os.path.join(path_samples, k + '_shelf')
+    path_sampled_csv = convert_shelf(path_shelf)
+
+    os.rename(path_sampled_csv, path_out)
+    os.unlink('%s.db' % path_shelf)
+
+    if normalise:
+        oepr.normalise.normalise(path_out, path_out.replace(path_samples, path_normalise))
+
+
+def sample_to_subdir(subdir, path_cfg, path_samples, path_labelled_visits,
+                     normalise=False):
+    p_subdir = os.path.join(path_samples, subdir)
+
+    if not os.path.isdir(p_subdir):
+        os.makedirs(p_subdir)
+
+    path_normalise = oepr.settings.get_cfg_field('path_normalise', path_cfg)
+    normalise_subdir = os.path.join(path_normalise, subdir)
+
+    if normalise and not os.path.isdir(normalise_subdir):
+        os.makedirs(normalise_subdir)
+
+    for index, c in enumerate(oepr.read.get_csvs(path_labelled_visits)):
+        path_out = os.path.join(p_subdir, '%d.csv' % (index + 1))
+        sample_csv(c, path_out, path_cfg, path_samples, path_normalise, normalise)
+
 
 def sample(csv_, path_cfg, path_samples):
     try:
@@ -138,31 +175,13 @@ def main(args):
     elif args.convert:
         return convert(path_cfg)
     elif args.train_and_test:
-        def sample_to_subdir(subdir):
-            for c in oepr.read.get_csvs(path_labelled_visits):
-                k = sample(c, path_cfg, path_samples)
-                if k:
-                    convert_shelf(os.path.join(path_samples, k + '_shelf'))
-
-            files = (
-                os.path.join(path_samples, f) for f in os.listdir(path_samples)
-            )
-            files = list(filter(os.path.isfile, files))
-
-            p_subdir = os.path.join(path_samples, subdir)
-
-            if not os.path.isdir(p_subdir):
-                os.mkdir(p_subdir)
-
-            for index, f in enumerate(f for f in files if f.endswith('.csv')):
-                os.rename(f, os.path.join(p_subdir, '%d.csv' % (index + 1)))
-
-            for f in files:
-                if os.path.isfile(f):
-                    os.unlink(f)
-
-        sample_to_subdir('train')
-        sample_to_subdir('test')
+        sample_to_subdir('train', path_cfg, path_samples, path_labelled_visits)
+        sample_to_subdir('test', path_cfg, path_samples, path_labelled_visits)
+    elif args.normalise:
+        sample_to_subdir('train', path_cfg, path_samples, path_labelled_visits,
+                normalise=True)
+        sample_to_subdir('test', path_cfg, path_samples, path_labelled_visits,
+                normalise=True)
     else:
         for c in oepr.read.get_csvs(path_labelled_visits):
             sample(c, path_cfg, path_samples)
