@@ -20,7 +20,7 @@ SAMPLE_FUNCTION = oepr.preprocess.sample_average_bucketed_centroid_distance
 
 
 def config_parser(subp):
-    parse = subp.add_parser('sample')
+    parse = subp.add_parser('sample', help='sampling and normalisation')
     parse.set_defaults(func=main)
     grp = parse.add_mutually_exclusive_group()
     grp.add_argument('--read', action='store_true',
