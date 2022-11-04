@@ -5,7 +5,7 @@ Command line interface.
 import argparse
 import os
 
-import oepr.learn
+import oepr.notebook
 import oepr.settings
 import oepr.sample
 
@@ -19,7 +19,7 @@ def get_cli_args():
 
     subparsers = parser.add_subparsers()
     oepr.sample.config_parser(subparsers)
-    oepr.learn.config_parser(subparsers)
+    oepr.notebook.config_parser(subparsers)
 
     args = parser.parse_args()
 
